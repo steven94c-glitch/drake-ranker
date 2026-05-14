@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OVO Ranker — Rank Your Favorite Drake Songs</title>
+<link rel="preconnect" href="https://itunes.apple.com">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;0,6..96,900;1,6..96,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #000;
+    --bg-card: #0c0c0c;
+    --bg-elev: #141414;
+    --line: #1c1c1c;
+    --line-strong: #2a2a2a;
+    --text: #ffffff;
+    --text-dim: #8a8a8a;
+    --text-faint: #555;
+    --gold: #c9a961;
+    --gold-bright: #e6c884;
+    --gold-deep: #8a6d2f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { background: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, sans-serif; }
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 20px 80px;
+    background:
+      radial-gradient(ellipse at top, rgba(201,169,97,0.06), transparent 60%),
+      radial-gradient(ellipse at bottom, rgba(201,169,97,0.03), transparent 60%),
+      #000;
+  }
+
+  /* ===== Header ===== */
+  .header {
+    width: 100%;
+    max-width: 1100px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 24px;
+    margin-bottom: 40px;
+    border-bottom: 1px solid var(--line);
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: 'Bodoni Moda', serif;
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+  }
+  .owl {
+    width: 28px;
+    height: 28px;
+    fill: var(--gold);
+  }
+  .header-meta {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--text-faint);
+    text-transform: uppercase;
+  }
+
+  /* ===== Type ===== */
+  .display {
+    font-family: 'Bodoni Moda', serif;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    line-height: 0.95;
+  }
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 16px;
+  }
+
+  /* ===== Screens ===== */
+  .screen { display: none; width: 100%; max-width: 1100px; }
+  .screen.active { display: block; }
+
+  /* ===== Start ===== */
+  #startScreen .hero {
+    text-align: center;
+    padding: 60px 20px 40px;
+  }
+  #startScreen h1 {
+    font-size: clamp(48px, 9vw, 96px);
+    margin-bottom: 24px;
+  }
+  #startScreen h1 .accent {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--gold);
+  }
+  #startScreen .lede {
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--text-dim);
+    max-width: 560px;
+    margin: 0 auto 40px;
+  }
+  .cta-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    margin-top: 60px;
+  }
+  .info-cell {
+    background: var(--bg);
+    padding: 28px 24px;
+  }
+  .info-cell .num {
+    font-family: 'Bodoni Moda', serif;
+    font-size: 36px;
+    font-weight: 900;
+    color: var(--gold);
+    margin-bottom: 6px;
+  }
+  .info-cell .label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  /* ===== Buttons ===== */
+  .btn {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-weight: 600;
+    padding: 16px 32px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .btn-primary {
+    background: var(--gold);
+    color: #000;
+  }
+  .btn-primary:hover { background: var(--gold-bright); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--line-strong);
+  }
+  .btn-ghost:hover { color: var(--text); border-color: var(--gold); }
+
+  /* ===== Game ===== */
+  .game-head {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  .game-head .title {
+    font-family: 'Bodoni Moda', serif;
+    font-size: clamp(28px, 5vw, 44px);
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .game-head .title em { color: var(--gold); font-weight: 400; }
+  .progress-wrap { width: 100%; max-width: 540px; margin: 0 auto; }
+  .progress-bar {
+    height: 2px;
+    background: var(--line);
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--gold);
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+  .progress-text {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--text-faint);
+    margin-top: 10px;
+    text-transform: uppercase;
+  }
+
+  .matchup {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 24px;
+    align-items: stretch;
+    margin-top: 40px;
+  }
+  @media (max-width: 720px) {
+    .matchup { grid-template-columns: 1fr; gap: 12px; }
+  }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    padding: 24px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 60%, rgba(201,169,97,0.08));
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .card:hover {
+    border-color: var(--gold);
+    transform: translateY(-3px);
+  }
+  .card:hover::before { opacity: 1; }
+  .art-wrap {
+    width: 100%;
+    aspect-ratio: 1/1;
+    background: var(--bg-elev);
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .art-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .art-wrap img.loaded { opacity: 1; }
+  .art-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bodoni Moda', serif;
+    font-size: 64px;
+    color: var(--line-strong);
+    font-style: italic;
+  }
+  .play-btn {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.7);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(8px);
+    transition: all 0.2s;
+    z-index: 2;
+  }
+  .play-btn:hover {
+    background: var(--gold);
+    color: #000;
+  }
+  .play-btn svg { width: 16px; height: 16px; fill: currentColor; }
+  .play-btn.playing { background: var(--gold); color: #000; }
+
+  .song-title {
+    font-family: 'Bodoni Moda', serif;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 6px;
+  }
+  .song-album {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .vs-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bodoni Moda', serif;
+    font-style: italic;
+    font-size: 28px;
+    color: var(--gold);
+    min-width: 40px;
+  }
+  @media (max-width: 720px) {
+    .vs-divider { padding: 4px 0; }
+  }
+
+  .controls {
+    margin-top: 32px;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .controls .btn { padding: 12px 24px; font-size: 10px; }
+
+  /* ===== Results ===== */
+  #resultsScreen .results-head {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  #resultsScreen h1 {
+    font-size: clamp(40px, 7vw, 72px);
+    margin-bottom: 16px;
+  }
+  #resultsScreen h1 em { color: var(--gold); font-weight: 400; }
+  #resultsScreen .results-sub {
+    color: var(--text-dim);
+    font-size: 14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .results-list { list-style: none; margin-top: 40px; }
+  .results-list li {
+    display: grid;
+    grid-template-columns: 60px 60px 1fr auto;
+    align-items: center;
+    gap: 20px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .results-list .rank {
+    font-family: 'Bodoni Moda', serif;
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--text-faint);
+    text-align: center;
+  }
+  .results-list .row-art {
+    width: 56px; height: 56px;
+    background: var(--bg-elev);
+    object-fit: cover;
+  }
+  .results-list .row-title {
+    font-family: 'Bodoni Moda', serif;
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .results-list .row-album {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+  .results-list li.top10 .rank { color: var(--gold); font-size: 32px; }
+  .results-list li.top10 .row-title { color: var(--gold-bright); }
+  .results-list li:first-child {
+    background: linear-gradient(90deg, rgba(201,169,97,0.08), transparent 70%);
+    padding: 20px 16px;
+    border-bottom-color: var(--gold-deep);
+  }
+  .results-list .row-play {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: transparent;
+    border: 1px solid var(--line-strong);
+    color: var(--text-dim);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .results-list .row-play:hover { color: var(--gold); border-color: var(--gold); }
+  .results-list .row-play svg { width: 12px; height: 12px; fill: currentColor; }
+
+  /* loader spinner */
+  .spinner {
+    width: 28px; height: 28px;
+    border: 2px solid var(--line-strong);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-card);
+    z-index: 3;
+  }
+
+  .footer-note {
+    margin-top: 60px;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="brand">
+    <svg class="owl" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+      <!-- Stylized owl mark -->
+      <path d="M32 4 C20 4 12 14 12 26 C12 32 14 37 18 41 L18 56 L26 56 L26 48 L38 48 L38 56 L46 56 L46 41 C50 37 52 32 52 26 C52 14 44 4 32 4 Z M24 22 C28 22 30 25 30 28 C30 31 28 34 24 34 C20 34 18 31 18 28 C18 25 20 22 24 22 Z M40 22 C44 22 46 25 46 28 C46 31 44 34 40 34 C36 34 34 31 34 28 C34 25 36 22 40 22 Z M24 28 C25 28 26 28.5 26 29.5 C26 30.5 25 31 24 31 C23 31 22 30.5 22 29.5 C22 28.5 23 28 24 28 Z M40 28 C41 28 42 28.5 42 29.5 C42 30.5 41 31 40 31 C39 31 38 30.5 38 29.5 C38 28.5 39 28 40 28 Z M32 36 L28 42 L36 42 Z"/>
+    </svg>
+    OVO Ranker
+  </div>
+  <div class="header-meta">est. 2026 · 100 tracks</div>
+</header>
+
+<!-- START -->
+<section class="screen active" id="startScreen">
+  <div class="hero">
+    <div class="eyebrow">A Personal Ranking Experience</div>
+    <h1 class="display">Your <span class="accent">Definitive</span><br>Drake Top 10.</h1>
+    <p class="lede">One hundred tracks. Side by side. Trust your gut, pick your favorite, and discover the songs that define your personal Drake catalog.</p>
+    <div class="cta-row">
+      <button class="btn btn-primary" onclick="startGame()">Begin Ranking</button>
+      <button class="btn btn-ghost" id="resumeBtn" style="display:none" onclick="resumeGame()">Resume Session</button>
+    </div>
+  </div>
+
+  <div class="info-grid">
+    <div class="info-cell">
+      <div class="num">100</div>
+      <div class="label">Tracks Curated</div>
+    </div>
+    <div class="info-cell">
+      <div class="num">~600</div>
+      <div class="label">Matchups</div>
+    </div>
+    <div class="info-cell">
+      <div class="num">30s</div>
+      <div class="label">Audio Previews</div>
+    </div>
+    <div class="info-cell">
+      <div class="num">10</div>
+      <div class="label">Final Top Songs</div>
+    </div>
+  </div>
+</section>
+
+<!-- GAME -->
+<section class="screen" id="gameScreen">
+  <div class="game-head">
+    <div class="eyebrow">Round in Progress</div>
+    <div class="title">Which do you <em>prefer</em>?</div>
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-text">
+        <span id="progressLeft">Matchup 0</span>
+        <span id="progressRight">of ~600</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="matchup">
+    <article class="card" id="cardA" onclick="choose(0)">
+      <div class="art-wrap">
+        <div class="art-placeholder">D</div>
+        <img id="artA" alt="" onload="this.classList.add('loaded')">
+        <button class="play-btn" onclick="event.stopPropagation(); togglePreview('A')" id="playBtnA" aria-label="Preview">
+          <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+        <div class="loading-overlay" id="loadingA"><div class="spinner"></div></div>
+      </div>
+      <div class="song-title" id="titleA"></div>
+      <div class="song-album" id="albumA"></div>
+    </article>
+
+    <div class="vs-divider">vs</div>
+
+    <article class="card" id="cardB" onclick="choose(1)">
+      <div class="art-wrap">
+        <div class="art-placeholder">D</div>
+        <img id="artB" alt="" onload="this.classList.add('loaded')">
+        <button class="play-btn" onclick="event.stopPropagation(); togglePreview('B')" id="playBtnB" aria-label="Preview">
+          <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+        <div class="loading-overlay" id="loadingB"><div class="spinner"></div></div>
+      </div>
+      <div class="song-title" id="titleB"></div>
+      <div class="song-album" id="albumB"></div>
+    </article>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-ghost" onclick="skipPair()">Skip</button>
+    <button class="btn btn-ghost" onclick="showResults()">View Standing</button>
+    <button class="btn btn-ghost" onclick="resetGame()">Restart</button>
+  </div>
+
+  <audio id="audioPlayer"></audio>
+</section>
+
+<!-- RESULTS -->
+<section class="screen" id="resultsScreen">
+  <div class="results-head">
+    <div class="eyebrow">The Verdict</div>
+    <h1 class="display">Your <em>Top</em> Drake.</h1>
+    <div class="results-sub" id="resultsSubtitle">Top 10 highlighted</div>
+    <div class="cta-row" style="margin-top:24px;">
+      <button class="btn btn-primary" id="continueBtn" onclick="continueGame()">Continue Ranking</button>
+      <button class="btn btn-ghost" onclick="resetGame()">Start Over</button>
+    </div>
+  </div>
+  <ol class="results-list" id="resultsList"></ol>
+  <div class="footer-note">OVO Ranker · Unofficial · For Fans</div>
+</section>
+
+<script>
+/* ============================================================
+   SONG CATALOG — title + iTunes search hint (artist/album disambiguation)
+   ============================================================ */
+const SONGS = [
+  {t:"Best I Ever Had",q:"Drake Best I Ever Had So Far Gone"},
+  {t:"Successful",q:"Drake Successful So Far Gone"},
+  {t:"Houstatlantavegas",q:"Drake Houstatlantavegas"},
+  {t:"Brand New",q:"Drake Brand New So Far Gone"},
+  {t:"Lust For Life",q:"Drake Lust For Life So Far Gone"},
+  {t:"Over",q:"Drake Over Thank Me Later"},
+  {t:"Find Your Love",q:"Drake Find Your Love"},
+  {t:"Fancy",q:"Drake Fancy Thank Me Later"},
+  {t:"Miss Me",q:"Drake Miss Me Lil Wayne"},
+  {t:"Show Me a Good Time",q:"Drake Show Me a Good Time"},
+  {t:"Light Up",q:"Drake Light Up Jay-Z"},
+  {t:"Up All Night",q:"Drake Up All Night Nicki Minaj"},
+  {t:"Marvins Room",q:"Drake Marvins Room Take Care"},
+  {t:"Headlines",q:"Drake Headlines Take Care"},
+  {t:"Take Care",q:"Drake Take Care Rihanna"},
+  {t:"The Motto",q:"Drake The Motto Lil Wayne"},
+  {t:"HYFR",q:"Drake HYFR Lil Wayne"},
+  {t:"Crew Love",q:"Drake Crew Love Weeknd"},
+  {t:"Make Me Proud",q:"Drake Make Me Proud Nicki Minaj"},
+  {t:"Practice",q:"Drake Practice Take Care"},
+  {t:"Doing It Wrong",q:"Drake Doing It Wrong"},
+  {t:"Shot For Me",q:"Drake Shot For Me"},
+  {t:"Underground Kings",q:"Drake Underground Kings"},
+  {t:"Look What You've Done",q:"Drake Look What You've Done"},
+  {t:"Started From the Bottom",q:"Drake Started From The Bottom"},
+  {t:"Hold On, We're Going Home",q:"Drake Hold On We're Going Home"},
+  {t:"Worst Behavior",q:"Drake Worst Behavior"},
+  {t:"Pound Cake",q:"Drake Pound Cake Jay-Z"},
+  {t:"Too Much",q:"Drake Too Much Sampha"},
+  {t:"From Time",q:"Drake From Time Jhene Aiko"},
+  {t:"Wu-Tang Forever",q:"Drake Wu-Tang Forever"},
+  {t:"Furthest Thing",q:"Drake Furthest Thing"},
+  {t:"The Language",q:"Drake The Language"},
+  {t:"Tuscan Leather",q:"Drake Tuscan Leather"},
+  {t:"Connect",q:"Drake Connect Nothing Was The Same"},
+  {t:"Energy",q:"Drake Energy If You're Reading This"},
+  {t:"10 Bands",q:"Drake 10 Bands"},
+  {t:"Know Yourself",q:"Drake Know Yourself"},
+  {t:"No Tellin'",q:"Drake No Tellin"},
+  {t:"Madonna",q:"Drake Madonna"},
+  {t:"6 God",q:"Drake 6 God"},
+  {t:"Used To",q:"Drake Used To Lil Wayne"},
+  {t:"Legend",q:"Drake Legend If You're Reading This"},
+  {t:"Jungle",q:"Drake Jungle If You're Reading This"},
+  {t:"Jumpman",q:"Drake Future Jumpman"},
+  {t:"Big Rings",q:"Drake Future Big Rings"},
+  {t:"Diamonds Dancing",q:"Drake Future Diamonds Dancing"},
+  {t:"Hotline Bling",q:"Drake Hotline Bling"},
+  {t:"One Dance",q:"Drake One Dance Wizkid"},
+  {t:"Controlla",q:"Drake Controlla"},
+  {t:"Too Good",q:"Drake Too Good Rihanna"},
+  {t:"Pop Style",q:"Drake Pop Style"},
+  {t:"Feel No Ways",q:"Drake Feel No Ways"},
+  {t:"Views",q:"Drake Views"},
+  {t:"Hype",q:"Drake Hype Views"},
+  {t:"9",q:"Drake 9 Views"},
+  {t:"Faithful",q:"Drake Faithful Pimp C"},
+  {t:"Fire & Desire",q:"Drake Fire Desire Views"},
+  {t:"Child's Play",q:"Drake Childs Play Views"},
+  {t:"U With Me?",q:"Drake U With Me Views"},
+  {t:"Passionfruit",q:"Drake Passionfruit"},
+  {t:"Free Smoke",q:"Drake Free Smoke"},
+  {t:"Fake Love",q:"Drake Fake Love"},
+  {t:"Portland",q:"Drake Portland Quavo Travis Scott"},
+  {t:"Get It Together",q:"Drake Get It Together Black Coffee"},
+  {t:"Blem",q:"Drake Blem More Life"},
+  {t:"Teenage Fever",q:"Drake Teenage Fever"},
+  {t:"Sacrifices",q:"Drake Sacrifices 2 Chainz"},
+  {t:"KMT",q:"Drake KMT Giggs"},
+  {t:"Gyalchester",q:"Drake Gyalchester"},
+  {t:"Nice For What",q:"Drake Nice For What"},
+  {t:"In My Feelings",q:"Drake In My Feelings"},
+  {t:"God's Plan",q:"Drake Gods Plan"},
+  {t:"Nonstop",q:"Drake Nonstop Scorpion"},
+  {t:"Mob Ties",q:"Drake Mob Ties"},
+  {t:"Don't Matter To Me",q:"Drake Don't Matter To Me Michael Jackson"},
+  {t:"I'm Upset",q:"Drake I'm Upset"},
+  {t:"Emotionless",q:"Drake Emotionless Scorpion"},
+  {t:"8 Out of 10",q:"Drake 8 Out of 10"},
+  {t:"Summer Games",q:"Drake Summer Games"},
+  {t:"Toosie Slide",q:"Drake Toosie Slide"},
+  {t:"Chicago Freestyle",q:"Drake Chicago Freestyle Giveon"},
+  {t:"Dreams Money Can Buy",q:"Drake Dreams Money Can Buy"},
+  {t:"5AM in Toronto",q:"Drake 5AM in Toronto"},
+  {t:"Club Paradise",q:"Drake Club Paradise"},
+  {t:"Way 2 Sexy",q:"Drake Way 2 Sexy Future"},
+  {t:"Knife Talk",q:"Drake Knife Talk 21 Savage"},
+  {t:"Fair Trade",q:"Drake Fair Trade Travis Scott"},
+  {t:"Girls Want Girls",q:"Drake Girls Want Girls Lil Baby"},
+  {t:"Champagne Poetry",q:"Drake Champagne Poetry"},
+  {t:"Love All",q:"Drake Love All Jay-Z"},
+  {t:"TSU",q:"Drake TSU Certified Lover Boy"},
+  {t:"IMY2",q:"Drake IMY2 Kid Cudi"},
+  {t:"Jimmy Cooks",q:"Drake Jimmy Cooks 21 Savage"},
+  {t:"Massive",q:"Drake Massive Honestly Nevermind"},
+  {t:"Sticky",q:"Drake Sticky Honestly Nevermind"},
+  {t:"First Person Shooter",q:"Drake First Person Shooter J. Cole"},
+  {t:"Slime You Out",q:"Drake Slime You Out SZA"},
+  {t:"Rich Baby Daddy",q:"Drake Rich Baby Daddy Sexyy Red"},
+  {t:"Forever",q:"Drake Forever Kanye Lil Wayne Eminem"},
+  {t:"Laugh Now Cry Later",q:"Drake Laugh Now Cry Later Lil Durk"},
+  {t:"Wants and Needs",q:"Drake Wants and Needs Lil Baby"},
+  {t:"Mr. Right Now",q:"21 Savage Mr Right Now Drake"},
+  {t:"Wait For U",q:"Future Wait For U Drake Tems"},
+  {t:"I'm On One",q:"DJ Khaled I'm On One Drake"}
+];
+
+const STORAGE_KEY = "ovoRanker_v2";
+const META_KEY = "ovoRanker_meta_v2";
+
+let state = null;
+let metaCache = loadMetaCache();
+let currentAudio = { which: null, el: null };
+
+function loadMetaCache() {
+  try { return JSON.parse(localStorage.getItem(META_KEY)) || {}; } catch(e) { return {}; }
+}
+function saveMetaCache() {
+  try { localStorage.setItem(META_KEY, JSON.stringify(metaCache)); } catch(e) {}
+}
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+function loadState() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch(e) { return null; }
+}
+
+async function fetchMeta(songObj) {
+  const key = songObj.t;
+  if (metaCache[key]) return metaCache[key];
+  const url = `https://itunes.apple.com/search?term=${encodeURIComponent(songObj.q)}&entity=song&limit=5`;
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    // Prefer a result where artist contains "Drake" if available
+    let pick = data.results.find(r => /drake/i.test(r.artistName)) || data.results[0];
+    if (!pick) {
+      metaCache[key] = { art: null, preview: null, album: "Drake" };
+    } else {
+      metaCache[key] = {
+        art: (pick.artworkUrl100 || "").replace("100x100", "600x600"),
+        preview: pick.previewUrl || null,
+        album: pick.collectionName || "Drake",
+        artist: pick.artistName || "Drake"
+      };
+    }
+  } catch(e) {
+    metaCache[key] = { art: null, preview: null, album: "Drake" };
+  }
+  saveMetaCache();
+  return metaCache[key];
+}
+
+function show(id) {
+  ["startScreen","gameScreen","resultsScreen"].forEach(s =>
+    document.getElementById(s).classList.toggle("active", s === id));
+  stopAudio();
+}
+
+window.addEventListener("load", () => {
+  if (loadState()) document.getElementById("resumeBtn").style.display = "inline-block";
+});
+
+function startGame() {
+  const shuffled = [...SONGS].sort(() => Math.random() - 0.5);
+  state = {
+    list: shuffled,
+    comparisons: 0,
+    estimatedTotal: Math.ceil(SONGS.length * Math.log2(SONGS.length)),
+  };
+  initMergeSort();
+  saveState();
+  show("gameScreen");
+  nextComparison();
+}
+function resumeGame() {
+  state = loadState();
+  if (!state) return startGame();
+  show("gameScreen");
+  nextComparison();
+}
+function continueGame() { show("gameScreen"); nextComparison(); }
+function resetGame() {
+  if (!confirm("Erase your progress and start over?")) return;
+  localStorage.removeItem(STORAGE_KEY);
+  state = null;
+  document.getElementById("resumeBtn").style.display = "none";
+  show("startScreen");
+}
+
+/* ===== Merge sort driven by user choices ===== */
+function initMergeSort() {
+  state.runs = state.list.map(s => [s]);
+  state.runIndex = 0;
+  prepareNextMerge();
+}
+function prepareNextMerge() {
+  while (state.runs.length > 1) {
+    if (state.runIndex + 1 < state.runs.length) {
+      state.currentMerge = {
+        left: state.runs[state.runIndex],
+        right: state.runs[state.runIndex + 1],
+        i: 0, j: 0, out: [],
+        replaceAt: state.runIndex
+      };
+      return;
+    }
+    // end of pass — compact and restart
+    state.runs = state.runs.filter(r => r && r.length);
+    state.runIndex = 0;
+    if (state.runs.length <= 1) break;
+  }
+  state.currentMerge = null;
+}
+
+function nextComparison() {
+  if (!state.currentMerge) {
+    if (state.runs.length <= 1) return finalize();
+    prepareNextMerge();
+    if (!state.currentMerge) return finalize();
+  }
+  const m = state.currentMerge;
+  // Drain exhausted side(s)
+  while (m.i >= m.left.length || m.j >= m.right.length) {
+    while (m.i < m.left.length) m.out.push(m.left[m.i++]);
+    while (m.j < m.right.length) m.out.push(m.right[m.j++]);
+    state.runs[m.replaceAt] = m.out;
+    state.runs[m.replaceAt + 1] = null;
+    state.runIndex += 2;
+    if (state.runIndex >= state.runs.length) {
+      state.runs = state.runs.filter(r => r && r.length);
+      state.runIndex = 0;
+    }
+    if (state.runs.length <= 1) return finalize();
+    prepareNextMerge();
+    if (!state.currentMerge) return finalize();
+  }
+  render();
+}
+
+async function render() {
+  const m = state.currentMerge;
+  const a = m.left[m.i];
+  const b = m.right[m.j];
+
+  document.getElementById("titleA").textContent = a.t;
+  document.getElementById("titleB").textContent = b.t;
+  document.getElementById("albumA").textContent = "Loading…";
+  document.getElementById("albumB").textContent = "Loading…";
+  document.getElementById("artA").classList.remove("loaded");
+  document.getElementById("artB").classList.remove("loaded");
+  document.getElementById("artA").src = "";
+  document.getElementById("artB").src = "";
+  document.getElementById("loadingA").style.display = "flex";
+  document.getElementById("loadingB").style.display = "flex";
+
+  const pct = Math.min(100, (state.comparisons / state.estimatedTotal) * 100);
+  document.getElementById("progressFill").style.width = pct + "%";
+  document.getElementById("progressLeft").textContent = `Matchup ${state.comparisons + 1}`;
+  document.getElementById("progressRight").textContent = `of ~${state.estimatedTotal}`;
+
+  // Fetch in parallel
+  const [metaA, metaB] = await Promise.all([fetchMeta(a), fetchMeta(b)]);
+  applyMeta("A", metaA);
+  applyMeta("B", metaB);
+
+  // Prefetch the next likely pair (one step ahead)
+  prefetchNext();
+}
+
+function applyMeta(which, meta) {
+  document.getElementById("album" + which).textContent = (meta.album || "").replace(/\(.*?\)/g, "").trim() || "Drake";
+  const img = document.getElementById("art" + which);
+  if (meta.art) {
+    img.src = meta.art;
+  }
+  document.getElementById("loading" + which).style.display = "none";
+}
+
+function prefetchNext() {
+  const m = state.currentMerge;
+  if (!m) return;
+  // peek likely next pair regardless of user choice
+  const peekA = m.left[m.i + 1] || m.left[m.i];
+  const peekB = m.right[m.j + 1] || m.right[m.j];
+  if (peekA) fetchMeta(peekA);
+  if (peekB) fetchMeta(peekB);
+}
+
+function choose(side) {
+  const m = state.currentMerge;
+  if (!m) return;
+  if (side === 0) m.out.push(m.left[m.i++]);
+  else m.out.push(m.right[m.j++]);
+  state.comparisons++;
+  stopAudio();
+  saveState();
+  nextComparison();
+}
+function skipPair() { choose(0); }
+
+function togglePreview(which) {
+  const m = state.currentMerge;
+  if (!m) return;
+  const song = which === "A" ? m.left[m.i] : m.right[m.j];
+  const meta = metaCache[song.t];
+  if (!meta || !meta.preview) return;
+  const audio = document.getElementById("audioPlayer");
+
+  if (currentAudio.which === which && !audio.paused) {
+    audio.pause();
+    document.getElementById("playBtn" + which).classList.remove("playing");
+    currentAudio.which = null;
+    return;
+  }
+  // stop any other
+  ["A","B"].forEach(w => document.getElementById("playBtn" + w).classList.remove("playing"));
+  audio.src = meta.preview;
+  audio.volume = 0.7;
+  audio.play();
+  document.getElementById("playBtn" + which).classList.add("playing");
+  currentAudio.which = which;
+  audio.onended = () => {
+    document.getElementById("playBtn" + which).classList.remove("playing");
+    currentAudio.which = null;
+  };
+}
+
+function stopAudio() {
+  const audio = document.getElementById("audioPlayer");
+  if (audio) { audio.pause(); audio.src = ""; }
+  ["A","B"].forEach(w => {
+    const b = document.getElementById("playBtn" + w);
+    if (b) b.classList.remove("playing");
+  });
+  currentAudio.which = null;
+}
+
+function finalize() {
+  state.finalRanking = state.runs[0] || state.list;
+  saveState();
+  showResults();
+}
+
+function showResults() {
+  stopAudio();
+  let ranking = state.finalRanking || [].concat(...state.runs.filter(Boolean));
+  const list = document.getElementById("resultsList");
+  list.innerHTML = "";
+  ranking.forEach((song, idx) => {
+    const li = document.createElement("li");
+    if (idx < 10) li.classList.add("top10");
+    const meta = metaCache[song.t] || {};
+    li.innerHTML = `
+      <div class="rank">${String(idx + 1).padStart(2,"0")}</div>
+      <img class="row-art" src="${meta.art || ""}" alt="" onerror="this.style.background='#141414'">
+      <div>
+        <div class="row-title">${song.t}</div>
+        <div class="row-album">${(meta.album || "Drake").replace(/\(.*?\)/g,"").trim()}</div>
+      </div>
+      <button class="row-play" onclick="rowPlay('${encodeURIComponent(song.t)}', this)">
+        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      </button>`;
+    list.appendChild(li);
+  });
+  document.getElementById("resultsSubtitle").textContent =
+    state.finalRanking
+      ? `Complete — ${state.comparisons} matchups`
+      : `In Progress — ${state.comparisons} matchups so far`;
+  document.getElementById("continueBtn").style.display = state.finalRanking ? "none" : "inline-block";
+  show("resultsScreen");
+}
+
+function rowPlay(encTitle, btn) {
+  const title = decodeURIComponent(encTitle);
+  const meta = metaCache[title];
+  if (!meta || !meta.preview) return;
+  const audio = document.getElementById("audioPlayer");
+  if (!audio.paused && audio.src === meta.preview) {
+    audio.pause();
+    return;
+  }
+  audio.src = meta.preview;
+  audio.volume = 0.7;
+  audio.play();
+}
+</script>
+</body>
+</html>
