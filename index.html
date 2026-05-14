@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>OVO Ranker — Rank Your Favorite Drake Songs</title>
 <link rel="preconnect" href="https://itunes.apple.com">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -416,6 +419,111 @@
     color: var(--text-faint);
     text-transform: uppercase;
     text-align: center;
+  }
+
+  /* ============================================================
+     MOBILE
+     ============================================================ */
+  @media (max-width: 720px) {
+    body {
+      padding: 16px 14px calc(40px + env(safe-area-inset-bottom)) 14px;
+    }
+    .header {
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+    }
+    .brand {
+      font-size: 15px;
+      letter-spacing: 2.5px;
+      gap: 8px;
+    }
+    .owl { width: 22px; height: 22px; }
+    .header-meta { font-size: 9px; letter-spacing: 2px; }
+
+    /* Start screen */
+    #startScreen .hero { padding: 24px 4px 28px; }
+    #startScreen h1 { font-size: 44px; margin-bottom: 18px; }
+    #startScreen .lede { font-size: 15px; margin-bottom: 28px; }
+    .eyebrow { font-size: 10px; letter-spacing: 3px; margin-bottom: 12px; }
+    .info-grid {
+      grid-template-columns: 1fr 1fr;
+      margin-top: 32px;
+    }
+    .info-cell { padding: 18px 14px; }
+    .info-cell .num { font-size: 28px; }
+    .info-cell .label { font-size: 9px; letter-spacing: 2px; }
+    .btn { padding: 14px 22px; font-size: 11px; letter-spacing: 2.5px; }
+
+    /* Game */
+    .game-head { margin-bottom: 20px; }
+    .game-head .title { font-size: 24px; margin-bottom: 8px; }
+    .progress-text { font-size: 10px; letter-spacing: 1.5px; }
+    .matchup {
+      margin-top: 20px;
+      gap: 10px;
+      grid-template-columns: 1fr;
+    }
+    .card {
+      padding: 14px;
+      flex-direction: row;
+      align-items: center;
+      gap: 14px;
+    }
+    .card .art-wrap {
+      width: 110px;
+      flex-shrink: 0;
+      margin-bottom: 0;
+      aspect-ratio: 1/1;
+    }
+    .card .play-btn {
+      width: 36px;
+      height: 36px;
+      bottom: 6px;
+      right: 6px;
+    }
+    .card .play-btn svg { width: 13px; height: 13px; }
+    .art-placeholder { font-size: 44px; }
+    .song-title { font-size: 17px; line-height: 1.2; }
+    .song-album { font-size: 10px; letter-spacing: 1.5px; margin-top: 4px; }
+    .vs-divider {
+      font-size: 18px;
+      padding: 2px 0;
+      color: var(--text-faint);
+    }
+    .controls { margin-top: 20px; gap: 8px; }
+    .controls .btn {
+      flex: 1;
+      min-width: 0;
+      padding: 12px 8px;
+      font-size: 9px;
+      letter-spacing: 1.5px;
+    }
+
+    /* Results */
+    #resultsScreen .results-head { margin-bottom: 24px; }
+    #resultsScreen h1 { font-size: 40px; margin-bottom: 12px; }
+    #resultsScreen .results-sub { font-size: 11px; letter-spacing: 1.5px; }
+    .results-list { margin-top: 24px; }
+    .results-list li {
+      grid-template-columns: 36px 44px 1fr 32px;
+      gap: 12px;
+      padding: 12px 0;
+    }
+    .results-list .rank { font-size: 20px; }
+    .results-list li.top10 .rank { font-size: 22px; }
+    .results-list .row-art { width: 44px; height: 44px; }
+    .results-list .row-title { font-size: 15px; }
+    .results-list .row-album { font-size: 9px; letter-spacing: 1.5px; }
+    .results-list li:first-child { padding: 14px 10px; }
+    .results-list .row-play { width: 32px; height: 32px; }
+    .footer-note { margin-top: 36px; font-size: 9px; }
+  }
+
+  @media (max-width: 380px) {
+    #startScreen h1 { font-size: 36px; }
+    .card .art-wrap { width: 92px; }
+    .song-title { font-size: 16px; }
+    .controls .btn { font-size: 8px; letter-spacing: 1px; padding: 10px 6px; }
   }
 </style>
 </head>
