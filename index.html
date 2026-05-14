@@ -412,6 +412,38 @@
     z-index: 3;
   }
 
+  /* Name input */
+  .name-form {
+    max-width: 420px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .name-label {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 4px;
+  }
+  .name-input {
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--line-strong);
+    color: var(--text);
+    padding: 16px 20px;
+    font-family: 'Bodoni Moda', serif;
+    font-size: 20px;
+    text-align: center;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  .name-input::placeholder { color: var(--text-faint); font-style: italic; font-size: 16px; }
+  .name-input:focus { border-color: var(--gold); }
+  .name-form .cta-row { margin-top: 12px; }
+
   .footer-note {
     margin-top: 60px;
     font-size: 10px;
@@ -546,10 +578,14 @@
     <div class="eyebrow">A Personal Ranking Experience</div>
     <h1 class="display">Your <span class="accent">Definitive</span><br>Drake Top 10.</h1>
     <p class="lede">One hundred tracks. Side by side. Trust your gut, pick your favorite, and discover the songs that define your personal Drake catalog.</p>
-    <div class="cta-row">
-      <button class="btn btn-primary" onclick="startGame()">Begin Ranking</button>
-      <button class="btn btn-ghost" id="resumeBtn" style="display:none" onclick="resumeGame()">Resume Session</button>
-    </div>
+    <form class="name-form" onsubmit="event.preventDefault(); startGame();">
+      <label class="name-label" for="nameInput">Your Name</label>
+      <input id="nameInput" class="name-input" type="text" placeholder="So we can put it on your top 10" maxlength="32" autocomplete="given-name" required>
+      <div class="cta-row">
+        <button class="btn btn-primary" type="submit">Begin Ranking</button>
+        <button class="btn btn-ghost" type="button" id="resumeBtn" style="display:none" onclick="resumeGame()">Resume Session</button>
+      </div>
+    </form>
   </div>
 
   <div class="info-grid">
@@ -631,6 +667,7 @@
     <div class="results-sub" id="resultsSubtitle">Top 10 highlighted</div>
     <div class="cta-row" style="margin-top:24px;">
       <button class="btn btn-primary" id="continueBtn" onclick="continueGame()">Continue Ranking</button>
+      <button class="btn btn-primary" id="downloadBtn" onclick="downloadTop10()" style="display:none">Download Top 10</button>
       <button class="btn btn-ghost" onclick="resetGame()">Start Over</button>
     </div>
   </div>
@@ -777,8 +814,12 @@ window.addEventListener("load", () => {
 });
 
 function startGame() {
+  const nameEl = document.getElementById("nameInput");
+  const name = (nameEl && nameEl.value || "").trim();
+  if (!name) { if (nameEl) nameEl.focus(); return; }
   const shuffled = [...SONGS].sort(() => Math.random() - 0.5);
   state = {
+    name,
     list: shuffled,
     comparisons: 0,
     estimatedTotal: Math.ceil(SONGS.length * Math.log2(SONGS.length)),
@@ -839,28 +880,30 @@ function prepareNextMerge() {
 }
 
 function nextComparison() {
-  if (!state.currentMerge) {
-    if (state.runs.length <= 1) return finalize();
-    prepareNextMerge();
-    if (!state.currentMerge) return finalize();
-  }
-  const m = state.currentMerge;
-  // Drain exhausted side(s)
-  while (m.i >= m.left.length || m.j >= m.right.length) {
-    while (m.i < m.left.length) m.out.push(m.left[m.i++]);
-    while (m.j < m.right.length) m.out.push(m.right[m.j++]);
-    state.runs[m.replaceAt] = m.out;
-    state.runs[m.replaceAt + 1] = null;
-    state.runIndex += 2;
-    if (state.runIndex >= state.runs.length) {
-      state.runs = state.runs.filter(r => r && r.length);
-      state.runIndex = 0;
+  while (true) {
+    if (!state.currentMerge) {
+      if (state.runs.length <= 1) return finalize();
+      prepareNextMerge();
+      if (!state.currentMerge) return finalize();
     }
-    if (state.runs.length <= 1) return finalize();
-    prepareNextMerge();
-    if (!state.currentMerge) return finalize();
+    const m = state.currentMerge;
+    if (m.i >= m.left.length || m.j >= m.right.length) {
+      while (m.i < m.left.length) m.out.push(m.left[m.i++]);
+      while (m.j < m.right.length) m.out.push(m.right[m.j++]);
+      state.runs[m.replaceAt] = m.out;
+      state.runs[m.replaceAt + 1] = null;
+      state.runIndex += 2;
+      if (state.runIndex >= state.runs.length) {
+        state.runs = state.runs.filter(r => r && r.length);
+        state.runIndex = 0;
+      }
+      if (state.runs.length <= 1) return finalize();
+      state.currentMerge = null;
+      continue;
+    }
+    render();
+    return;
   }
-  render();
 }
 
 function render() {
@@ -967,7 +1010,185 @@ function showResults() {
       ? `Complete — ${state.comparisons} matchups`
       : `In Progress — ${state.comparisons} matchups so far`;
   document.getElementById("continueBtn").style.display = state.finalRanking ? "none" : "inline-block";
+  document.getElementById("downloadBtn").style.display = "inline-block";
   show("resultsScreen");
+}
+
+/* ============================================================
+   DOWNLOAD TOP 10 AS JPG
+   ============================================================ */
+async function downloadTop10() {
+  const btn = document.getElementById("downloadBtn");
+  const originalText = btn.textContent;
+  btn.textContent = "Generating…";
+  btn.disabled = true;
+
+  try {
+    const ranking = state.finalRanking || [].concat(...state.runs.filter(Boolean));
+    const top10 = ranking.slice(0, 10);
+    const name = (state.name || "Drake Fan").toUpperCase();
+
+    // 1080 x 1350 — Instagram portrait
+    const W = 1080, H = 1350;
+    const canvas = document.createElement("canvas");
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext("2d");
+
+    // Background — pure black with subtle gold vignette
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, W, H);
+    const grad = ctx.createRadialGradient(W/2, 0, 0, W/2, 0, W);
+    grad.addColorStop(0, "rgba(201,169,97,0.10)");
+    grad.addColorStop(1, "rgba(201,169,97,0)");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Top hairline
+    ctx.fillStyle = "#1c1c1c";
+    ctx.fillRect(60, 90, W - 120, 1);
+
+    // Brand mark
+    ctx.fillStyle = "#c9a961";
+    ctx.font = "700 18px 'Bodoni Moda', serif";
+    ctx.textAlign = "left";
+    ctx.fillText("OVO  RANKER", 60, 70);
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#555";
+    ctx.font = "500 12px 'Inter', sans-serif";
+    ctx.fillText("EST. 2026", W - 60, 70);
+
+    // Eyebrow
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#c9a961";
+    ctx.font = "600 14px 'Inter', sans-serif";
+    ctx.fillText("M Y   D E F I N I T I V E", W/2, 160);
+
+    // Name (display serif, italic for "Top 10")
+    ctx.fillStyle = "#fff";
+    ctx.font = "900 88px 'Bodoni Moda', serif";
+    // Fit name to width
+    let nameSize = 88;
+    ctx.font = `900 ${nameSize}px 'Bodoni Moda', serif`;
+    while (ctx.measureText(name).width > W - 160 && nameSize > 40) {
+      nameSize -= 4;
+      ctx.font = `900 ${nameSize}px 'Bodoni Moda', serif`;
+    }
+    ctx.fillText(name, W/2, 240);
+
+    // "Drake Top 10" subhead
+    ctx.font = "italic 400 60px 'Bodoni Moda', serif";
+    ctx.fillStyle = "#c9a961";
+    ctx.fillText("Drake Top 10", W/2, 310);
+
+    // Divider
+    ctx.fillStyle = "#1c1c1c";
+    ctx.fillRect(60, 360, W - 120, 1);
+
+    // Load all 10 album arts in parallel (with crossOrigin for canvas export)
+    const images = await Promise.all(top10.map(s => loadImage(s.art)));
+
+    // Rows: 10 entries from y=400 to y=H-100, ~95px per row
+    const rowHeight = 92;
+    const startY = 400;
+
+    top10.forEach((song, i) => {
+      const y = startY + i * rowHeight;
+      // Rank
+      ctx.textAlign = "left";
+      ctx.fillStyle = i === 0 ? "#e6c884" : "#c9a961";
+      ctx.font = `900 ${i === 0 ? 56 : 44}px 'Bodoni Moda', serif`;
+      const rankStr = String(i + 1).padStart(2, "0");
+      ctx.fillText(rankStr, 60, y + (i === 0 ? 56 : 50));
+
+      // Album art
+      const artX = 200, artY = y + 6, artSize = 72;
+      ctx.fillStyle = "#141414";
+      ctx.fillRect(artX, artY, artSize, artSize);
+      if (images[i]) {
+        try { ctx.drawImage(images[i], artX, artY, artSize, artSize); } catch(e) {}
+      }
+
+      // Song title + album
+      ctx.fillStyle = "#fff";
+      ctx.font = "700 26px 'Bodoni Moda', serif";
+      ctx.textAlign = "left";
+      const titleText = truncate(ctx, song.t, W - 320);
+      ctx.fillText(titleText, 300, y + 38);
+      ctx.fillStyle = "#8a8a8a";
+      ctx.font = "500 14px 'Inter', sans-serif";
+      const albumText = truncate(ctx, (song.album || "Drake").toUpperCase(), W - 320);
+      ctx.fillText(albumText, 300, y + 64);
+
+      // Row divider
+      if (i < 9) {
+        ctx.fillStyle = "#141414";
+        ctx.fillRect(60, y + rowHeight - 4, W - 120, 1);
+      }
+    });
+
+    // Footer
+    ctx.fillStyle = "#1c1c1c";
+    ctx.fillRect(60, H - 80, W - 120, 1);
+    ctx.fillStyle = "#555";
+    ctx.font = "500 11px 'Inter', sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("R A N K E D   O N   O V O   R A N K E R", W/2, H - 45);
+
+    // Export
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+    triggerDownload(dataUrl, `${name.toLowerCase().replace(/[^a-z0-9]+/g,"-")}-drake-top-10.jpg`);
+  } catch (e) {
+    console.error(e);
+    alert("Couldn't generate the image — try again, or take a screenshot.");
+  } finally {
+    btn.textContent = originalText;
+    btn.disabled = false;
+  }
+}
+
+function loadImage(src) {
+  return new Promise(resolve => {
+    if (!src) return resolve(null);
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+}
+
+function truncate(ctx, text, maxWidth) {
+  if (ctx.measureText(text).width <= maxWidth) return text;
+  while (text.length > 3 && ctx.measureText(text + "…").width > maxWidth) {
+    text = text.slice(0, -1);
+  }
+  return text + "…";
+}
+
+function triggerDownload(dataUrl, filename) {
+  // Try Web Share API (iOS-friendly) first if the device looks mobile
+  const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+  if (isMobile && navigator.canShare) {
+    fetch(dataUrl).then(r => r.blob()).then(blob => {
+      const file = new File([blob], filename, { type: "image/jpeg" });
+      if (navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file], title: "My Drake Top 10" }).catch(() => fallbackDownload(dataUrl, filename));
+      } else {
+        fallbackDownload(dataUrl, filename);
+      }
+    }).catch(() => fallbackDownload(dataUrl, filename));
+  } else {
+    fallbackDownload(dataUrl, filename);
+  }
+}
+
+function fallbackDownload(dataUrl, filename) {
+  const a = document.createElement("a");
+  a.href = dataUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 function rowPlay(encTitle, btn) {
