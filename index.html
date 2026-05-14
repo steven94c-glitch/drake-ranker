@@ -707,7 +707,7 @@ const SONGS = [
   {t:"Started From the Bottom",art:"https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/5f/30/6d/5f306d67-bff8-2595-9d41-51be895d3208/00602537542321.rgb.jpg/600x600bb.jpg",preview:"https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/9f/2b/70/9f2b70ee-0c3f-a2df-4cec-668f0ae073c7/mzaf_11270505716933928903.plus.aac.p.m4a",album:"Nothing Was the Same",artist:"Drake"},
   {t:"Hold On, We're Going Home",art:"https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/8c/8b/af/8c8baf5c-4c0d-dcb3-d945-a3ee7bffeabd/00602537542314.rgb.jpg/600x600bb.jpg",preview:"https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/8b/aa/58/8baa5844-f5ad-ae06-a1c7-be48cf1c1743/mzaf_12142933926201509067.plus.aac.p.m4a",album:"Nothing Was the Same",artist:"Drake"},
   {t:"Worst Behavior",art:"https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/5f/30/6d/5f306d67-bff8-2595-9d41-51be895d3208/00602537542321.rgb.jpg/600x600bb.jpg",preview:"https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/3b/d1/56/3bd15651-ba45-f2cc-bb74-9522f2124dad/mzaf_6154981119424361830.plus.aac.p.m4a",album:"Nothing Was the Same",artist:"Drake"},
-  {t:"Pound Cake",art:"https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/95/5a/52/955a5277-9d05-091c-f491-8b0a2817aa97/717124254850.png/600x600bb.jpg",preview:"https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview112/v4/49/7d/26/497d2609-ae83-983c-dd7c-c80d71ec2812/mzaf_7935304847185395828.plus.aac.p.m4a",album:"Pound Cake - Single",artist:"Drake White"},
+  {t:"Pound Cake",art:"https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/60/e8/d1/60e8d144-2b8e-cbdc-9ff8-beaf9f4868b1/00602537542345.rgb.jpg/600x600bb.jpg",preview:"https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/42/ad/16/42ad16b6-68ae-0524-2a58-7a106e6bfc92/mzaf_7108992586558576269.plus.aac.p.m4a",album:"Nothing Was the Same",artist:"Drake"},
   {t:"Too Much",art:"https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/5f/30/6d/5f306d67-bff8-2595-9d41-51be895d3208/00602537542321.rgb.jpg/600x600bb.jpg",preview:"https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/ed/d2/77/edd27789-9ca4-ed3e-cb2a-5d13d947b5bf/mzaf_975259618531012221.plus.aac.p.m4a",album:"Nothing Was the Same",artist:"Drake"},
   {t:"From Time",art:"https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/5f/30/6d/5f306d67-bff8-2595-9d41-51be895d3208/00602537542321.rgb.jpg/600x600bb.jpg",preview:"https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/1c/15/12/1c15120c-4f83-25a7-cadd-fdac5aa77b5c/mzaf_6541242774298966724.plus.aac.p.m4a",album:"Nothing Was the Same",artist:"Drake"},
   {t:"Wu-Tang Forever",art:"https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/5f/30/6d/5f306d67-bff8-2595-9d41-51be895d3208/00602537542321.rgb.jpg/600x600bb.jpg",preview:"https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/f9/96/f4/f996f45c-6d14-f9ee-acca-767f2238b9c4/mzaf_5106041620891396616.plus.aac.p.m4a",album:"Nothing Was the Same",artist:"Drake"},
@@ -787,7 +787,10 @@ const SONGS = [
   {t:"I'm On One",art:"https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/50/69/30/50693088-05b7-147e-cd14-bbc67d4db89e/11UMGIM17569.rgb.jpg/600x600bb.jpg",preview:"https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/a0/08/48/a00848cf-9f42-419b-5f1b-1efd876c9719/mzaf_11507841636791252056.plus.aac.p.m4a",album:"We the Best Forever",artist:"DJ Khaled"}
 ];
 
-const STORAGE_KEY = "ovoRanker_v2";
+const STORAGE_KEY = "ovoRanker_v3";
+
+// One-time cleanup of stale keys from pre-fix sessions
+try { localStorage.removeItem("ovoRanker_v1"); localStorage.removeItem("ovoRanker_v2"); localStorage.removeItem("ovoRanker_meta_v2"); } catch(e) {}
 
 let state = null;
 let currentAudio = { which: null };
