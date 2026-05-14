@@ -3,3 +3,4 @@ retry.py
 fix.py
 _songs_js.txt
 songs.min.json
+build_full_catalog.py
