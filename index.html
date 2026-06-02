@@ -196,6 +196,19 @@
     margin-top: 10px;
     text-transform: uppercase;
   }
+  .cloud-status {
+    text-align: center;
+    margin-top: 6px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    min-height: 14px;
+    transition: color 0.3s;
+  }
+  .cloud-status[data-status="saved"] { color: var(--gold-deep); }
+  .cloud-status[data-status="saving"] { color: var(--text-faint); }
+  .cloud-status[data-status="offline"] { color: #b04848; }
 
   .matchup {
     display: grid;
@@ -580,11 +593,15 @@
     <p class="lede">Every Drake song ever released, side by side. Trust your gut, pick your favorite, and discover the tracks that define your personal Drake catalog. Progress saves automatically — you can stop anytime.</p>
     <form class="name-form" onsubmit="event.preventDefault(); startGame();">
       <label class="name-label" for="nameInput">Your Name</label>
-      <input id="nameInput" class="name-input" type="text" placeholder="So we can put it on your top 10" maxlength="32" autocomplete="given-name" required>
+      <input id="nameInput" class="name-input" type="text" placeholder="Goes on your top 10" maxlength="32" autocomplete="given-name" required>
+      <label class="name-label" for="emailInput" style="margin-top:8px;">Your Email</label>
+      <input id="emailInput" class="name-input" type="email" placeholder="So you can resume on any device" maxlength="120" autocomplete="email" required>
       <div class="cta-row">
         <button class="btn btn-primary" type="submit">Begin Ranking</button>
         <button class="btn btn-ghost" type="button" id="resumeBtn" style="display:none" onclick="resumeGame()">Resume Session</button>
+        <button class="btn btn-ghost" type="button" onclick="resumeByEmail()">Resume By Email</button>
       </div>
+      <p style="font-size:11px;color:#666;letter-spacing:1.5px;text-transform:uppercase;margin-top:14px;text-align:center;">Progress backs up to the cloud after every pick</p>
     </form>
   </div>
 
@@ -619,6 +636,7 @@
         <span id="progressLeft">Matchup 0</span>
         <span id="progressRight">of ~600</span>
       </div>
+      <div id="cloudStatus" class="cloud-status"></div>
     </div>
   </div>
 
@@ -1029,11 +1047,73 @@ try { ["ovoRanker_v1","ovoRanker_v2","ovoRanker_v3","ovoRanker_v4","ovoRanker_me
 let state = null;
 let currentAudio = { which: null };
 
+/* ============================================================
+   PERSISTENCE — localStorage primary, cloud (KV) backup
+   ============================================================ */
+let cloudSaveTimer = null;
+let cloudSaveInflight = false;
+
 function saveState() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+  scheduleCloudSave();
 }
+
 function loadState() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch(e) { return null; }
+}
+
+function scheduleCloudSave() {
+  if (!state || !state.email) return;
+  // Debounce — coalesce rapid picks into a single POST every 1.5s
+  if (cloudSaveTimer) clearTimeout(cloudSaveTimer);
+  cloudSaveTimer = setTimeout(doCloudSave, 1500);
+}
+
+async function doCloudSave() {
+  if (!state || !state.email || cloudSaveInflight) return;
+  cloudSaveInflight = true;
+  setCloudStatus("saving");
+  try {
+    const res = await fetch("/api/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: state.email, state })
+    });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    setCloudStatus("saved");
+  } catch (e) {
+    setCloudStatus("offline");
+    console.warn("Cloud save failed:", e);
+  } finally {
+    cloudSaveInflight = false;
+  }
+}
+
+function setCloudStatus(s) {
+  const el = document.getElementById("cloudStatus");
+  if (!el) return;
+  const map = {
+    saving: "Backing up…",
+    saved: "Backed up ✓",
+    offline: "Saved locally · cloud offline",
+    "": ""
+  };
+  el.textContent = map[s] || "";
+  el.dataset.status = s || "";
+}
+
+async function cloudLoad(email) {
+  if (!email) return null;
+  try {
+    const res = await fetch(`/api/load?email=${encodeURIComponent(email)}`);
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    return data.state || null;
+  } catch (e) {
+    console.warn("Cloud load failed:", e);
+    return null;
+  }
 }
 
 // Lookup map for quick access by title (used by results-row play buttons)
@@ -1045,17 +1125,57 @@ function show(id) {
   stopAudio();
 }
 
-window.addEventListener("load", () => {
+window.addEventListener("load", async () => {
+  // 1. Auto-resume via URL: ?resume=name@example.com
+  const params = new URLSearchParams(location.search);
+  const resumeEmail = params.get("resume");
+  if (resumeEmail) {
+    const cloud = await cloudLoad(resumeEmail);
+    if (cloud) {
+      state = hydrateState(cloud);
+      // Persist to localStorage so future loads are instant
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+      // Strip the query string so a refresh doesn't keep re-fetching
+      history.replaceState({}, "", location.pathname);
+      show("gameScreen");
+      nextComparison();
+      return;
+    } else {
+      alert(`No saved session found for ${resumeEmail}. Starting fresh.`);
+    }
+  }
+  // 2. Show resume button if local session exists
   if (loadState()) document.getElementById("resumeBtn").style.display = "inline-block";
 });
 
+function hydrateState(s) {
+  const hydrate = x => (x && x.t && SONG_BY_TITLE[x.t]) ? SONG_BY_TITLE[x.t] : x;
+  if (s.list) s.list = s.list.map(hydrate);
+  if (s.runs) s.runs = s.runs.map(run => run ? run.map(hydrate) : run);
+  if (s.currentMerge) {
+    s.currentMerge.left = (s.currentMerge.left || []).map(hydrate);
+    s.currentMerge.right = (s.currentMerge.right || []).map(hydrate);
+    s.currentMerge.out = (s.currentMerge.out || []).map(hydrate);
+  }
+  if (s.finalRanking) s.finalRanking = s.finalRanking.map(hydrate);
+  return s;
+}
+
+function isValidEmail(e) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+}
+
 function startGame() {
   const nameEl = document.getElementById("nameInput");
+  const emailEl = document.getElementById("emailInput");
   const name = (nameEl && nameEl.value || "").trim();
+  const email = (emailEl && emailEl.value || "").trim().toLowerCase();
   if (!name) { if (nameEl) nameEl.focus(); return; }
+  if (!isValidEmail(email)) { if (emailEl) emailEl.focus(); return; }
   const shuffled = [...SONGS].sort(() => Math.random() - 0.5);
   state = {
     name,
+    email,
     list: shuffled,
     comparisons: 0,
     estimatedTotal: Math.ceil(SONGS.length * Math.log2(SONGS.length)),
@@ -1065,19 +1185,37 @@ function startGame() {
   show("gameScreen");
   nextComparison();
 }
-function resumeGame() {
-  state = loadState();
-  if (!state) return startGame();
-  // Rehydrate stale song objects (older sessions stored {t,q}; new ones have art/preview/album)
-  const hydrate = s => (s && s.t && SONG_BY_TITLE[s.t]) ? SONG_BY_TITLE[s.t] : s;
-  if (state.list) state.list = state.list.map(hydrate);
-  if (state.runs) state.runs = state.runs.map(run => run ? run.map(hydrate) : run);
-  if (state.currentMerge) {
-    state.currentMerge.left = (state.currentMerge.left || []).map(hydrate);
-    state.currentMerge.right = (state.currentMerge.right || []).map(hydrate);
-    state.currentMerge.out = (state.currentMerge.out || []).map(hydrate);
+
+async function resumeByEmail() {
+  const emailEl = document.getElementById("emailInput");
+  const email = (emailEl && emailEl.value || "").trim().toLowerCase();
+  if (!isValidEmail(email)) {
+    alert("Enter your email above first, then click Resume By Email.");
+    if (emailEl) emailEl.focus();
+    return;
   }
-  if (state.finalRanking) state.finalRanking = state.finalRanking.map(hydrate);
+  const cloud = await cloudLoad(email);
+  if (!cloud) {
+    alert(`No backup found for ${email}. If this is your first session, click Begin Ranking instead.`);
+    return;
+  }
+  state = hydrateState(cloud);
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+  show("gameScreen");
+  nextComparison();
+}
+function resumeGame() {
+  const s = loadState();
+  if (!s) return startGame();
+  state = hydrateState(s);
+  // If this is an older local session with no email, prompt once to back it up
+  if (!state.email) {
+    const ans = prompt("Add an email to back up this session to the cloud?\n(So you can resume if your browser clears storage. Leave blank to skip.)", "");
+    if (ans && isValidEmail(ans.trim().toLowerCase())) {
+      state.email = ans.trim().toLowerCase();
+      saveState();  // this triggers cloud save
+    }
+  }
   show("gameScreen");
   nextComparison();
 }
